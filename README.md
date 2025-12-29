@@ -1,6 +1,4 @@
-# QAMP Shot Planner
-
-Budgeting circuit runs for expectation values using concentration bounds.
+# Budgeting circuit runs for expectation values using concentration bounds
 
 ## Overview
 
