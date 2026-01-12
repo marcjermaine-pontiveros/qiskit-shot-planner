@@ -71,6 +71,78 @@ This works for:
 
 See the demo notebooks for more examples of multi-qubit and Hamiltonian use cases.
 
+## Using with SamplerV2
+
+The Sampler primitive returns quasi-probability distributions instead of expectation values.
+You can still use HoeffdingPlanner - just compute the expectation value from the sampled counts.
+
+### Local BackendSamplerV2
+
+```python
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from qiskit.primitives import BackendSamplerV2
+from qamp_shotplanner import HoeffdingPlanner
+
+# 1. Create circuit with measurement
+qc = QuantumCircuit(1)
+qc.ry(0.5, 0)
+qc.measure_all()  # Required for Sampler
+
+# 2. Plan shots for Z observable (bounded in [-1, 1])
+planner = HoeffdingPlanner(epsilon_stat=0.02, delta=0.01, a=-1.0, b=1.0)
+shots = planner.planned_shots()
+
+# 3. Run with BackendSamplerV2
+backend = AerSimulator()
+sampler = BackendSamplerV2(backend=backend)
+job = sampler.run([qc], shots=shots)
+result = job.result()[0]
+
+# 4. Post-process to get expectation value
+# For Z measurement: E[Z] = P(0) - P(1)
+quasi_dist = result.data.meas
+expectation_value = quasi_dist.get(0, 0) - quasi_dist.get(1, 0)
+```
+
+### IBM Runtime SamplerV2
+
+```python
+from qiskit import QuantumCircuit
+from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
+from qiskit.transpiler.preset_pass_managers import generate_preset_pass_manager
+from qamp_shotplanner import HoeffdingPlanner
+
+# 1. Initialize and select backend
+service = QiskitRuntimeService()
+backend = service.least_busy(operational=True, simulator=False)
+
+# 2. Create and transpile circuit to ISA
+qc = QuantumCircuit(1)
+qc.ry(0.5, 0)
+qc.measure_all()
+
+pm = generate_preset_pass_manager(backend=backend, optimization_level=1)
+isa_circuit = pm.run(qc)
+
+# 3. Plan shots (same as local)
+planner = HoeffdingPlanner(epsilon_stat=0.02, delta=0.01, a=-1.0, b=1.0)
+shots = planner.planned_shots()
+
+# 4. Run with IBM Runtime Sampler
+sampler = SamplerV2(mode=backend)
+job = sampler.run([isa_circuit], shots=shots)
+result = job.result()[0]
+
+# 5. Post-process quasi-distribution to expectation value
+quasi_dist = result.data.c
+expectation_value = quasi_dist.get(0, 0) - quasi_dist.get(1, 0)
+```
+
+**Note**: For observables other than Pauli-Z, you need to rotate the measurement basis:
+- For X: add `qc.h(qubit)` before measuring
+- For Y: add `qc.sdg(qubit); qc.h(qubit)` before measuring
+
 ## SWAP Test Example
 
 ```python
