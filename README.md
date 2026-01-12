@@ -32,7 +32,46 @@ uv pip install -e .
 pip install -e .
 ```
 
-## Quickstart
+## Using with Your Own Circuits
+
+This library works with any Qiskit circuit and bounded observable. Here's the basic pattern:
+
+```python
+from qiskit import QuantumCircuit
+from qiskit_aer.primitives import EstimatorV2
+from qamp_shotplanner import HoeffdingPlanner, pauli_z
+
+# 1. Create your circuit
+qc = QuantumCircuit(1)
+qc.ry(0.5, 0)
+
+# 2. Define observable (Pauli observables bounded in [-1, 1])
+observable = pauli_z(qubit=0, num_qubits=1)
+
+# 3. Plan shots with Hoeffding bound
+planner = HoeffdingPlanner(
+    epsilon_stat=0.02,  # Error tolerance
+    delta=0.01,         # Failure probability
+    a=-1.0,             # Observable lower bound
+    b=1.0               # Observable upper bound
+)
+shots = planner.planned_shots()  # 26,492 shots
+
+# 4. Run with Qiskit EstimatorV2
+estimator = EstimatorV2(options={"run_options": {"shots": shots}})
+job = estimator.run([(qc, observable)])
+result = job.result()[0]
+expectation_value = float(result.data.evs)
+```
+
+This works for:
+- **Single-qubit Paulis**: Use `pauli_x()`, `pauli_y()`, `pauli_z()` helpers
+- **Multi-qubit correlations**: Use `correlation_observable()` for ZZ, XX, etc.
+- **Hamiltonians**: Use `hamiltonian_term()` for energy estimation
+
+See the demo notebooks for more examples of multi-qubit and Hamiltonian use cases.
+
+## SWAP Test Example
 
 ```python
 import math
