@@ -134,7 +134,7 @@ sampler = SamplerV2(mode=backend)
 job = sampler.run([isa_circuit], shots=shots)
 result = job.result()[0]
 
-# 5. Post-process quasi-distribution to expectation value
+# 5. Post-process quasi-distribution into an expectation value
 quasi_dist = result.data.c
 expectation_value = quasi_dist.get(0, 0) - quasi_dist.get(1, 0)
 ```
