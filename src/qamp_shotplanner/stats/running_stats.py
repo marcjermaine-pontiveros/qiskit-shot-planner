@@ -123,3 +123,51 @@ class RunningStats:
         for x in samples:
             stats.update(x)
         return stats
+
+    @classmethod
+    def from_binary_counts(
+        cls,
+        count_positive: int,
+        count_negative: int,
+        value_positive: float = 1.0,
+        value_negative: float = -1.0,
+    ) -> "RunningStats":
+        """Create RunningStats from counts of two possible outcomes.
+
+        Computes mean and m2 directly from counts without expanding to a list.
+        This is O(1) in space rather than O(n).
+
+        For SWAP test: count_positive = count_0 (ancilla=0, value=+1)
+                       count_negative = count_1 (ancilla=1, value=-1)
+
+        Args:
+            count_positive: Number of occurrences of value_positive
+            count_negative: Number of occurrences of value_negative
+            value_positive: Value for positive outcome (default +1.0)
+            value_negative: Value for negative outcome (default -1.0)
+
+        Returns:
+            RunningStats with computed mean and m2
+
+        Raises:
+            ValueError: If counts are negative
+        """
+        if count_positive < 0 or count_negative < 0:
+            raise ValueError("Counts must be non-negative")
+
+        n = count_positive + count_negative
+        if n == 0:
+            return cls()
+
+        # Compute mean directly: sum / n
+        total_sum = count_positive * value_positive + count_negative * value_negative
+        mean = total_sum / n
+
+        # Compute m2 = sum((x - mean)^2)
+        # For binary values: m2 = count_pos * (val_pos - mean)^2 + count_neg * (val_neg - mean)^2
+        m2 = (
+            count_positive * (value_positive - mean) ** 2
+            + count_negative * (value_negative - mean) ** 2
+        )
+
+        return cls(n=n, mean=mean, m2=m2)

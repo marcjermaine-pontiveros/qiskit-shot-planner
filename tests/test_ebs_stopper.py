@@ -12,6 +12,7 @@ from qamp_shotplanner.planners.ebs_stopping import (
 
 def test_ebs_never_exceeds_hoeffding_cap():
     """EBS should never use more shots than Hoeffding planner."""
+    random.seed(42)
     stopper = EmpiricalBernsteinStopper(
         epsilon_stat=0.02,
         delta=0.01,
@@ -53,6 +54,7 @@ def test_ebs_stopper_with_fake_sampler_low_variance():
 
 def test_ebs_stopper_with_fake_sampler_high_variance():
     """High variance sampler should hit cap."""
+    random.seed(123)
     stopper = EmpiricalBernsteinStopper(
         epsilon_stat=0.01,  # Tight epsilon
         delta=0.01,
@@ -228,6 +230,7 @@ def test_ebs_run_with_single_sample_callback():
 
 def test_ebs_estimate_accuracy():
     """With a known mean, estimate should converge."""
+    random.seed(999)
     true_mean = 0.7
     stopper = EmpiricalBernsteinStopper(
         epsilon_stat=0.05,
@@ -245,3 +248,105 @@ def test_ebs_estimate_accuracy():
 
     # Estimate should be close to true mean
     assert abs(result.estimate - true_mean) < stopper.epsilon_stat
+
+
+def test_delta_schedule_returns_copy():
+    """delta_schedule should return a copy for immutability."""
+    stopper = EmpiricalBernsteinStopper(
+        epsilon_stat=0.02,
+        delta=0.01,
+        a=-1.0,
+        b=1.0,
+    )
+
+    deltas1 = stopper.delta_schedule()
+    deltas2 = stopper.delta_schedule()
+
+    # Should be equal but not same object
+    assert deltas1 == deltas2
+    assert deltas1 is not deltas2
+
+    # Modifying one shouldn't affect the other
+    deltas1[0] = 999.0
+    assert deltas2[0] != 999.0
+
+
+def test_delta_schedule_sums_to_delta():
+    """Sum of delta schedule should equal total delta."""
+    delta = 0.05
+    stopper = EmpiricalBernsteinStopper(
+        epsilon_stat=0.02,
+        delta=delta,
+        a=-1.0,
+        b=1.0,
+    )
+
+    deltas = stopper.delta_schedule()
+    assert abs(sum(deltas) - delta) < 1e-10
+
+
+def test_compute_radius_matches_manual():
+    """compute_radius should match manual calculation."""
+    from qamp_shotplanner.planners.empirical_bernstein import eb_radius_modified
+    from qamp_shotplanner.stats.running_stats import RunningStats
+
+    stopper = EmpiricalBernsteinStopper(
+        epsilon_stat=0.02,
+        delta=0.01,
+        a=-1.0,
+        b=1.0,
+    )
+
+    stats = RunningStats.from_samples([0.5] * 100)
+
+    # Manual calculation
+    deltas = stopper.delta_schedule()
+    expected = eb_radius_modified(
+        n=stats.n,
+        R=stopper.R,
+        var_biased=stats.variance_biased,
+        delta_k=deltas[0],
+        alpha=stopper.alpha,
+    )
+
+    # API calculation
+    actual = stopper.compute_radius(stats, checkpoint_index=0)
+
+    assert abs(actual - expected) < 1e-10
+
+
+def test_should_stop_respects_n_min():
+    """should_stop should return False before n_min samples."""
+    from qamp_shotplanner.stats.running_stats import RunningStats
+
+    stopper = EmpiricalBernsteinStopper(
+        epsilon_stat=0.02,
+        delta=0.01,
+        a=-1.0,
+        b=1.0,
+        n_min=50,
+    )
+
+    # Create stats with fewer than n_min samples
+    stats = RunningStats.from_samples([0.5] * 10)  # Only 10 samples
+
+    # Should not stop even with low variance
+    assert stopper.should_stop(stats, checkpoint_index=0) is False
+
+
+def test_compute_radius_invalid_index():
+    """compute_radius should raise IndexError for invalid checkpoint_index."""
+    import pytest
+    from qamp_shotplanner.stats.running_stats import RunningStats
+
+    stopper = EmpiricalBernsteinStopper(
+        epsilon_stat=0.02,
+        delta=0.01,
+        a=-1.0,
+        b=1.0,
+    )
+
+    stats = RunningStats.from_samples([0.5] * 100)
+
+    with pytest.raises(IndexError):
+        stopper.compute_radius(stats, checkpoint_index=999)

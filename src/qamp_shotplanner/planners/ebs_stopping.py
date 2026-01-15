@@ -116,6 +116,62 @@ class EmpiricalBernsteinStopper:
         """Return the geometric checkpoints."""
         return self._checkpoints.copy()
 
+    def delta_schedule(self) -> list[float]:
+        """Return the per-check delta allocations.
+
+        Each checkpoint k uses delta_k for its stopping criterion.
+        The sum of all deltas equals the total failure probability delta.
+
+        Returns:
+            List of per-check failure probabilities
+        """
+        return self._deltas.copy()
+
+    def compute_radius(self, stats: "RunningStats", checkpoint_index: int) -> float:
+        """Compute the empirical Bernstein radius at a checkpoint.
+
+        This encapsulates the stopping criterion calculation, using the
+        stopper's configured parameters (R, alpha) and the per-check delta.
+
+        Args:
+            stats: RunningStats with current sample statistics
+            checkpoint_index: Index into checkpoints() list (0-based)
+
+        Returns:
+            The empirical Bernstein radius epsilon_n
+
+        Raises:
+            IndexError: If checkpoint_index is out of range
+        """
+        if checkpoint_index < 0 or checkpoint_index >= len(self._deltas):
+            raise IndexError(
+                f"checkpoint_index {checkpoint_index} out of range [0, {len(self._deltas)})"
+            )
+
+        delta_k = self._deltas[checkpoint_index]
+        return eb_radius_modified(
+            n=stats.n,
+            R=self.R,
+            var_biased=stats.variance_biased,
+            delta_k=delta_k,
+            alpha=self.alpha,
+        )
+
+    def should_stop(self, stats: "RunningStats", checkpoint_index: int) -> bool:
+        """Check if the stopping criterion is met at a checkpoint.
+
+        Args:
+            stats: RunningStats with current sample statistics
+            checkpoint_index: Index into checkpoints() list
+
+        Returns:
+            True if epsilon_n < epsilon_stat (should stop), False otherwise
+        """
+        if stats.n < self.n_min:
+            return False
+        epsilon_n = self.compute_radius(stats, checkpoint_index)
+        return epsilon_n < self.epsilon_stat
+
     def run(
         self,
         sample_one: Callable[[], float],

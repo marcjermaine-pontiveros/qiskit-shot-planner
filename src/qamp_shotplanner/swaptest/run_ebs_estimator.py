@@ -11,6 +11,29 @@ from qamp_shotplanner.planners.ebs_stopping import EmpiricalBernsteinStopper
 from qamp_shotplanner.stats.running_stats import RunningStats
 
 
+def extract_ancilla_counts(counts: dict[str, int]) -> tuple[int, int]:
+    """Extract ancilla qubit measurement counts from Qiskit bitstring counts.
+
+    For SWAP test circuits, the ancilla is qubit 0. In Qiskit's big-endian
+    bitstring format, qubit 0 is the rightmost character.
+
+    Args:
+        counts: Dictionary mapping bitstrings to measurement counts
+
+    Returns:
+        (count_0, count_1) where count_0 is the number of ancilla=0 outcomes
+        and count_1 is the number of ancilla=1 outcomes
+    """
+    count_0 = 0
+    count_1 = 0
+    for bitstring, count in counts.items():
+        if bitstring[-1] == "0":
+            count_0 += count
+        else:
+            count_1 += count
+    return count_0, count_1
+
+
 def _run_swap_batch(
     qc: QuantumCircuit,
     shots: int,
@@ -63,21 +86,7 @@ def _run_swap_batch(
 
     counts = result.get_counts()
 
-    # Extract ancilla (qubit 0) measurement
-    # In Qiskit counts, bitstrings are in big-endian order
-    # For 3-qubit system: q2 q1 q0 (rightmost is q0/ancilla)
-    # '000', '010', '100', '110' have ancilla=0
-    # '001', '011', '101', '111' have ancilla=1
-    count_0 = 0
-    count_1 = 0
-    for bitstring, count in counts.items():
-        # Rightmost character is ancilla (qubit 0)
-        if bitstring[-1] == "0":
-            count_0 += count
-        else:
-            count_1 += count
-
-    return count_0, count_1
+    return extract_ancilla_counts(counts)
 
 
 def run_swap_fidelity_estimator_ebs(
@@ -205,10 +214,6 @@ def run_swap_fidelity_estimator_ebs_batch_optimized(
     )
 
     checkpoints = stopper.checkpoints()
-    deltas = stopper._deltas  # Per-check delta allocations
-    R = stopper.R
-    epsilon_stat = stopper.epsilon_stat
-    alpha_param = stopper.alpha
 
     backend = AerSimulator()
     backend_opts = {}
@@ -242,56 +247,23 @@ def run_swap_fidelity_estimator_ebs_batch_optimized(
             result = backend.run(qc_isa, shots=delta_n, **backend_opts).result()
             counts = result.get_counts()
 
-            # Update stats from counts (without expanding to list)
-            # Bit 0 → +1, Bit 1 → -1
-            count_0 = 0
-            count_1 = 0
-            for bitstring, count in counts.items():
-                if bitstring[-1] == "0":
-                    count_0 += count
-                else:
-                    count_1 += count
+            count_0, count_1 = extract_ancilla_counts(counts)
 
-            # Update stats using sums
-            # sum_x = (+1)*count_0 + (-1)*count_1 = count_0 - count_1
-            # sum_x2 = count_0 + count_1 (since x² = 1 for both outcomes)
-
-            current_n = stats.n
-            new_n = current_n + delta_n
-
-            # Update mean: μ_new = μ_old + (sum_new - μ_old * Δn) / n_new
-            sum_batch = count_0 - count_1  # Sum of new samples
-            stats.mean = stats.mean + (sum_batch - stats.mean * delta_n) / new_n
-
-            # Update m2 using parallel algorithm
-            delta = sum_batch / delta_n - stats.mean  # Mean of batch - overall mean
-            stats.m2 += delta**2 * current_n * delta_n / new_n
-            # Plus add variance within the batch
-            # For {+1, -1}, variance within batch = 4*p*(1-p) = 4*count_0*count_1/(count_0+count_1)^2
-            # Simpler: sum_x2_batch - (sum_x_batch)^2/n_batch
-            sum_x2_batch = delta_n  # All x² = 1
-            var_batch = sum_x2_batch - (sum_batch**2) / delta_n
-            stats.m2 += var_batch
-
-            stats.n = new_n
+            # Create batch stats in O(1) space using correct formula
+            batch_stats = RunningStats.from_binary_counts(
+                count_positive=count_0,
+                count_negative=count_1,
+                value_positive=1.0,
+                value_negative=-1.0,
+            )
+            # Merge using the mathematically correct parallel Welford algorithm
+            stats = stats.merge(batch_stats)
             prev_checkpoint = checkpoint
 
-        # Check stopping criterion
-        if stats.n >= stopper.n_min:
-            from qamp_shotplanner.planners.empirical_bernstein import eb_radius_modified
-
-            delta_k = deltas[k]
-            epsilon_n = eb_radius_modified(
-                n=stats.n,
-                R=R,
-                var_biased=stats.variance_biased,
-                delta_k=delta_k,
-                alpha=alpha_param,
-            )
-
-            if epsilon_n < epsilon_stat:
-                F_hat = max(0.0, min(1.0, stats.mean))
-                return F_hat, stats.n, stats
+        # Check stopping criterion using public API
+        if stopper.should_stop(stats, checkpoint_index=k):
+            F_hat = max(0.0, min(1.0, stats.mean))
+            return F_hat, stats.n, stats
 
     # Hit cap
     F_hat = max(0.0, min(1.0, stats.mean))

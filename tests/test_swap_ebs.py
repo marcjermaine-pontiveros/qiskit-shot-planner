@@ -7,6 +7,7 @@ from qamp_shotplanner.swaptest.run_ebs_estimator import (
     run_swap_fidelity_estimator_ebs,
     run_swap_fidelity_estimator_ebs_batch_optimized,
     _run_swap_batch,
+    extract_ancilla_counts,
 )
 
 
@@ -268,3 +269,67 @@ def test_swap_ebs_strict_epsilon():
     # Just verify both are valid
     assert shots1 > 0
     assert shots2 > 0
+
+
+def test_run_swap_fidelity_estimator_ebs_with_noise():
+    """High-level EBS estimator should handle a simple NoiseModel."""
+    from qiskit_aer.noise import NoiseModel
+    from qamp_shotplanner.swaptest.run_ebs_estimator import run_swap_fidelity_estimator_ebs
+
+    qc = swap_test_1qubit(theta1=0.1, theta2=0.1)
+    noise_model = NoiseModel()
+
+    F_hat, shots_used = run_swap_fidelity_estimator_ebs(
+        qc,
+        epsilon_F=0.1,
+        delta=0.05,
+        noise_model=noise_model,
+        seed_simulator=42,
+    )
+
+    # Assert the estimator ran and produced a sensible fidelity estimate
+    assert 0.0 <= F_hat <= 1.0
+    assert shots_used > 0
+
+
+def test_run_swap_fidelity_estimator_ebs_batch_optimized_with_noise():
+    """Batch-optimized EBS estimator should handle a simple NoiseModel."""
+    from qiskit_aer.noise import NoiseModel
+    from qamp_shotplanner.swaptest.run_ebs_estimator import run_swap_fidelity_estimator_ebs_batch_optimized
+
+    qc = swap_test_1qubit(theta1=0.1, theta2=0.1)
+    noise_model = NoiseModel()
+
+    F_hat, shots_used, stats = run_swap_fidelity_estimator_ebs_batch_optimized(
+        qc,
+        epsilon_F=0.1,
+        delta=0.05,
+        noise_model=noise_model,
+        seed_simulator=43,
+    )
+
+    # Assert the estimator ran and produced a sensible fidelity estimate
+    assert 0.0 <= F_hat <= 1.0
+    assert shots_used > 0
+    assert stats.n == shots_used
+
+
+def test_extract_ancilla_counts():
+    """Test ancilla extraction utility."""
+    # Test basic case
+    counts = {"000": 30, "001": 20, "010": 25, "011": 25}
+    count_0, count_1 = extract_ancilla_counts(counts)
+    assert count_0 == 55  # 000 + 010
+    assert count_1 == 45  # 001 + 011
+
+    # Test all zeros
+    counts = {"000": 100}
+    count_0, count_1 = extract_ancilla_counts(counts)
+    assert count_0 == 100
+    assert count_1 == 0
+
+    # Test all ones
+    counts = {"111": 100}
+    count_0, count_1 = extract_ancilla_counts(counts)
+    assert count_0 == 0
+    assert count_1 == 100

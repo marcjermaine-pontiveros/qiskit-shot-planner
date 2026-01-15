@@ -114,3 +114,58 @@ def test_running_stats_welford_numerical_stability():
     stats = RunningStats.from_samples([1e6, 1e6 + 1, 1e6 + 2])
     assert stats.mean == 1e6 + 1
     assert stats.variance_biased == pytest.approx(2.0 / 3.0)
+
+
+def test_from_binary_counts_matches_from_samples():
+    """from_binary_counts should match from_samples for equivalent data."""
+    count_0, count_1 = 73, 27
+    samples = [1.0] * count_0 + [-1.0] * count_1
+
+    stats_samples = RunningStats.from_samples(samples)
+    stats_counts = RunningStats.from_binary_counts(count_0, count_1)
+
+    assert stats_samples.n == stats_counts.n
+    assert abs(stats_samples.mean - stats_counts.mean) < 1e-10
+    assert abs(stats_samples.m2 - stats_counts.m2) < 1e-10
+
+
+def test_from_binary_counts_empty():
+    """Both counts zero should return empty stats."""
+    stats = RunningStats.from_binary_counts(0, 0)
+    assert stats.n == 0
+    assert stats.mean == 0.0
+    assert stats.m2 == 0.0
+
+
+def test_from_binary_counts_single_positive():
+    """Only positive count should work."""
+    stats = RunningStats.from_binary_counts(10, 0)
+    assert stats.n == 10
+    assert stats.mean == 1.0
+    assert stats.m2 == 0.0  # All same value, no variance
+
+
+def test_from_binary_counts_single_negative():
+    """Only negative count should work."""
+    stats = RunningStats.from_binary_counts(0, 10)
+    assert stats.n == 10
+    assert stats.mean == -1.0
+    assert stats.m2 == 0.0
+
+
+def test_from_binary_counts_custom_values():
+    """Custom values should work correctly."""
+    stats = RunningStats.from_binary_counts(
+        count_positive=3,
+        count_negative=1,
+        value_positive=0.0,
+        value_negative=1.0,
+    )
+    assert stats.n == 4
+    assert abs(stats.mean - 0.25) < 1e-10  # (0+0+0+1)/4 = 0.25
+
+
+def test_from_binary_counts_negative_raises():
+    """Negative counts should raise ValueError."""
+    with pytest.raises(ValueError, match="Counts must be non-negative"):
+        RunningStats.from_binary_counts(-1, 5)
