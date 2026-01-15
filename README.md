@@ -34,7 +34,7 @@ pip install -e .
 
 ## Using with Your Own Circuits
 
-This library works with any Qiskit circuit and bounded observable. Here's the basic pattern:
+This library works with any Qiskit circuit and any bounded observable. Here's the basic pattern:
 
 ```python
 from qiskit import QuantumCircuit
