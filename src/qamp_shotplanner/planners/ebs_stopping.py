@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Callable, Literal, Sequence
 
 from qamp_shotplanner.planners.empirical_bernstein import (
+    eb_radius_maurer,
     eb_radius_modified,
     ebs_delta_schedule,
     geom_checkpoints,
@@ -149,12 +150,11 @@ class EmpiricalBernsteinStopper:
             )
 
         delta_k = self._deltas[checkpoint_index]
-        return eb_radius_modified(
+        return eb_radius_maurer(
             n=stats.n,
             R=self.R,
             var_biased=stats.variance_biased,
-            delta_k=delta_k,
-            alpha=self.alpha,
+            delta=delta_k,
         )
 
     def should_stop(self, stats: "RunningStats", checkpoint_index: int) -> bool:
@@ -224,12 +224,11 @@ class EmpiricalBernsteinStopper:
             if stats.n >= self.n_min:
                 # Compute modified EB radius at this checkpoint
                 delta_k = self._deltas[k]
-                epsilon_n = eb_radius_modified(
+                epsilon_n = eb_radius_maurer(
                     n=stats.n,
                     R=self.R,
                     var_biased=stats.variance_biased,
-                    delta_k=delta_k,
-                    alpha=self.alpha,
+                    delta=delta_k,
                 )
 
                 # Stop if radius is below target
@@ -244,12 +243,11 @@ class EmpiricalBernsteinStopper:
 
         # If we never stopped early, we've hit the Hoeffding cap
         # Compute final radius for reporting
-        final_epsilon = eb_radius_modified(
+        final_epsilon = eb_radius_maurer(
             n=stats.n,
             R=self.R,
             var_biased=stats.variance_biased,
-            delta_k=self._deltas[-1],
-            alpha=self.alpha,
+            delta=self._deltas[-1],
         )
 
         return StopResult(
