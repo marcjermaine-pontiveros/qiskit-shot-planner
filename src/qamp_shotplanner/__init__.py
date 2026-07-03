@@ -45,6 +45,48 @@ from qamp_shotplanner.observables import (
     hamiltonian_term,
 )
 
+# Adaptive extensions (anytime, Bonferroni multi-Pauli)
+from qamp_shotplanner.planners.anytime import AnytimeEBSStopper, anytime_delta
+from qamp_shotplanner.planners.bonferroni import BonferroniResult, bonferroni_estimate
+
+# Backends (sampler adapters, noise models, run provenance)
+from qamp_shotplanner.backends import (
+    RunRecord,
+    backend_sampler,
+    calibrated_noise_model,
+    depolarizing_noise_model,
+    fake_montreal_simulator,
+    fetch_job,
+    noise_model_sampler,
+    offline_replay_sampler,
+    run_and_record,
+    snapshot_calibration,
+    statevector_sampler,
+    write_manifest,
+)
+
+# Workloads (QAOA MaxCut, VQE H2)
+from qamp_shotplanner.workloads import (
+    H2_ANGLES,
+    H2_COEFFS,
+    PAULI_LABELS,
+    h2_terms,
+    ideal_zz,
+    pauli_outcome_map,
+    qaoa_maxcut_circuit,
+    vqe_ansatz,
+    measured_ansatz,
+    zz_outcome_map,
+)
+
+# Error mitigation and lower bounds
+from qamp_shotplanner.mitigation import fold_gates, zne_extrapolate
+from qamp_shotplanner.lower_bound import (
+    le_cam_additive,
+    le_cam_lower_bound,
+    le_cam_two_point,
+)
+
 __all__ = [
     # Core planner
     "HoeffdingPlanner",
@@ -75,4 +117,39 @@ __all__ = [
     "correlation_observable",
     "bell_state_observable",
     "hamiltonian_term",
+    # Adaptive extensions
+    "AnytimeEBSStopper",
+    "anytime_delta",
+    "BonferroniResult",
+    "bonferroni_estimate",
+    # Backends
+    "statevector_sampler",
+    "noise_model_sampler",
+    "backend_sampler",
+    "offline_replay_sampler",
+    "fake_montreal_simulator",
+    "depolarizing_noise_model",
+    "calibrated_noise_model",
+    "RunRecord",
+    "run_and_record",
+    "fetch_job",
+    "snapshot_calibration",
+    "write_manifest",
+    # Workloads
+    "qaoa_maxcut_circuit",
+    "zz_outcome_map",
+    "ideal_zz",
+    "vqe_ansatz",
+    "measured_ansatz",
+    "h2_terms",
+    "pauli_outcome_map",
+    "H2_COEFFS",
+    "H2_ANGLES",
+    "PAULI_LABELS",
+    # Mitigation and lower bounds
+    "fold_gates",
+    "zne_extrapolate",
+    "le_cam_lower_bound",
+    "le_cam_additive",
+    "le_cam_two_point",
 ]
