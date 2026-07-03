@@ -12,6 +12,7 @@ from qamp_shotplanner.planners.ebs_stopping import (
 )
 from qamp_shotplanner.planners.empirical_bernstein import (
     eb_radius,
+    eb_radius_maurer,
     eb_radius_modified,
     geom_checkpoints,
     ebs_delta_schedule,
@@ -95,6 +96,7 @@ __all__ = [
     "StopResult",
     "RunningStats",
     "eb_radius",
+    "eb_radius_maurer",
     "eb_radius_modified",
     "geom_checkpoints",
     "ebs_delta_schedule",
