@@ -7,7 +7,7 @@ name = "qamp-shotplanner"
 version = "0.1.0"
 description = "Budgeting circuit runs for expectation values using concentration bounds"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "ipykernel>=7.1.0",
     "jupyter>=1.0.0",
