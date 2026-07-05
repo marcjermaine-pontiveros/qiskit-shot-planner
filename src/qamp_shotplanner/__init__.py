@@ -1,6 +1,6 @@
 """QAMP Shot Planner - Budgeting circuit runs using concentration bounds."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Core
 from qamp_shotplanner.planners.hoeffding import HoeffdingPlanner

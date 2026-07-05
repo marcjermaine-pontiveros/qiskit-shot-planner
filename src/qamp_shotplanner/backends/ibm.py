@@ -161,7 +161,7 @@ def run_and_record(
     estimate, var, n = _derive(counts, outcome_map)
     delta = float(tags["delta"])
     method = str(tags["method"])
-    radius = eb_radius_maurer(n=max(n, 2), R=_R, var_biased=var, delta=delta)
+    radius = eb_radius_maurer(n=n, R=_R, var_biased=var, delta=delta)
 
     jobs_dir = os.path.join(out_dir, "jobs")
     os.makedirs(jobs_dir, exist_ok=True)

@@ -35,16 +35,18 @@ class StopResult:
 class EmpiricalBernsteinStopper:
     """Empirical Bernstein stopping for bounded IID variables.
 
-    Uses Algorithm 2 from Gresch–Tepe–Kliesch (arXiv:2502.01730v1):
-    - Geometric checking to avoid wasteful evaluations
-    - Mid-interval stopping modification (via alpha parameter)
+    Stops on the provable two-sided Maurer-Pontil empirical Bernstein radius
+    (``eb_radius_maurer``), the single radius used throughout the thesis:
+    - Geometric checking at predetermined checkpoints to avoid wasteful evaluations
+    - Uniform per-check failure budget ``delta_k = delta / K``
     - Hoeffding cap (never exceeds Hoeffding's planned shots)
 
-    The stopping criterion at checkpoint k:
-        ε_n_k < ε_stat
+    The stopping criterion at checkpoint k is ``r_n_k <= epsilon_stat``, where
+    ``r_n_k`` is the Maurer-Pontil radius evaluated with the per-check budget
+    ``delta_k``.
 
-    where ε_n_k is computed using the modified empirical Bernstein bound
-    with per-check confidence allocation d_k.
+    Note: ``alpha`` is retained for backward compatibility with the earlier
+    modified-radius prototype but is ignored by the Maurer-Pontil radius.
     """
 
     def __init__(
@@ -65,7 +67,8 @@ class EmpiricalBernsteinStopper:
             a: Lower bound of the random variable
             b: Upper bound of the random variable
             beta: Geometric checkpoint factor (> 1). Default 1.1.
-            alpha: Mid-interval tightness parameter (> 0). Default 1.0.
+            alpha: Legacy mid-interval tightness parameter (> 0). Ignored by the
+                Maurer-Pontil radius; retained only for backward compatibility.
             n_min: Minimum samples before first check. Default 10.
 
         Raises:
@@ -132,7 +135,7 @@ class EmpiricalBernsteinStopper:
         """Compute the empirical Bernstein radius at a checkpoint.
 
         This encapsulates the stopping criterion calculation, using the
-        stopper's configured parameters (R, alpha) and the per-check delta.
+        stopper's configured range R and the per-check delta.
 
         Args:
             stats: RunningStats with current sample statistics
