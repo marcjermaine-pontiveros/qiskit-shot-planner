@@ -287,7 +287,7 @@ def test_delta_schedule_sums_to_delta():
 
 def test_compute_radius_matches_manual():
     """compute_radius should match manual calculation."""
-    from qamp_shotplanner.planners.empirical_bernstein import eb_radius_modified
+    from qamp_shotplanner.planners.empirical_bernstein import eb_radius_maurer
     from qamp_shotplanner.stats.running_stats import RunningStats
 
     stopper = EmpiricalBernsteinStopper(
@@ -299,14 +299,14 @@ def test_compute_radius_matches_manual():
 
     stats = RunningStats.from_samples([0.5] * 100)
 
-    # Manual calculation
+    # Manual calculation using the provable two-sided Maurer-Pontil radius,
+    # which is what compute_radius evaluates.
     deltas = stopper.delta_schedule()
-    expected = eb_radius_modified(
+    expected = eb_radius_maurer(
         n=stats.n,
         R=stopper.R,
         var_biased=stats.variance_biased,
-        delta_k=deltas[0],
-        alpha=stopper.alpha,
+        delta=deltas[0],
     )
 
     # API calculation
