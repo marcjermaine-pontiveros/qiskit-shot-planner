@@ -19,7 +19,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from qamp_shotplanner.planners.empirical_bernstein import eb_radius
+from qamp_shotplanner.planners.empirical_bernstein import eb_radius_maurer
 
 OutcomeMap = Callable[[str], float]
 
@@ -161,7 +161,7 @@ def run_and_record(
     estimate, var, n = _derive(counts, outcome_map)
     delta = float(tags["delta"])
     method = str(tags["method"])
-    radius = eb_radius(n=max(n, 1), R=_R, var_biased=var, delta=delta)
+    radius = eb_radius_maurer(n=max(n, 2), R=_R, var_biased=var, delta=delta)
 
     jobs_dir = os.path.join(out_dir, "jobs")
     os.makedirs(jobs_dir, exist_ok=True)
