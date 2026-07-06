@@ -394,17 +394,17 @@ qamp-2025/
 ## Scope and Limitations
 
 ### In Scope (v0.2.0)
-✅ Hoeffding, Empirical Bernstein (Maurer–Pontil), geometric-checkpoint, and anytime stopping
-✅ Bonferroni multi-Pauli energy guarantee with variance-aware allocation
-✅ Le Cam two-point lower bounds
-✅ Noise models, IBM Runtime provenance, and ZNE with a variance-inflation diagnostic
-✅ SWAP-test, QAOA, and H₂ VQE workloads
-✅ Coverage validation harness and a full test suite
+- ✅ Hoeffding, Empirical Bernstein (Maurer–Pontil), geometric-checkpoint, and anytime stopping
+- ✅ Bonferroni multi-Pauli energy guarantee with variance-aware allocation
+- ✅ Le Cam two-point lower bounds
+- ✅ Noise models, IBM Runtime provenance, and ZNE with a variance-inflation diagnostic
+- ✅ SWAP-test, QAOA, and H₂ VQE workloads
+- ✅ Coverage validation harness and a full test suite
 
 ### Out of Scope (Future Work)
-❌ Live session-based hardware stopping (open plan runs the resumable job-mode driver instead)
-❌ PEC and other mitigation families beyond ZNE
-❌ Rich CLI or general benchmarking frameworks
+- ❌ Live session-based hardware stopping (open plan runs the resumable job-mode driver instead)
+- ❌ PEC and other mitigation families beyond ZNE
+- ❌ Rich CLI or general benchmarking frameworks
 
 ## Reproducibility
 
