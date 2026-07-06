@@ -63,6 +63,7 @@ from qamp_shotplanner.backends import (
     run_and_record,
     snapshot_calibration,
     statevector_sampler,
+    statevector_value_sampler,
     write_manifest,
 )
 
@@ -126,6 +127,7 @@ __all__ = [
     "bonferroni_estimate",
     # Backends
     "statevector_sampler",
+    "statevector_value_sampler",
     "noise_model_sampler",
     "backend_sampler",
     "offline_replay_sampler",
