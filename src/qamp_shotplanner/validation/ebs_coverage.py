@@ -47,7 +47,6 @@ def coverage_validation_swap_ebs(
     reference_shots: int = 100000,
     noise_model: Optional[NoiseModel] = None,
     beta: float = 1.1,
-    alpha: float = 1.0,
 ) -> EBSCoverageStats:
     """Run coverage validation for SWAP test fidelity estimation with EBS.
 
@@ -66,7 +65,6 @@ def coverage_validation_swap_ebs(
         reference_shots: Shots for reference value (default large for accuracy)
         noise_model: Optional noise model for simulation
         beta: EBS geometric checkpoint factor (default 1.1)
-        alpha: EBS mid-interval tightness parameter (default 1.0)
 
     Returns:
         EBSCoverageStats with validation results
@@ -93,7 +91,6 @@ def coverage_validation_swap_ebs(
             noise_model=noise_model,
             seed_simulator=trial,
             beta=beta,
-            alpha=alpha,
         )
 
         error = abs(F_hat - F_ref)

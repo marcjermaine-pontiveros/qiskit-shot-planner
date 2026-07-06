@@ -32,8 +32,8 @@ def test_ebs_coverage_validation_happy_path():
     assert stats.max_shots_used >= stats.mean_shots_used
 
 
-def test_ebs_coverage_with_custom_beta_alpha():
-    """Coverage validation should accept custom beta and alpha."""
+def test_ebs_coverage_with_custom_beta():
+    """Coverage validation should accept a custom beta."""
     stats = coverage_validation_swap_ebs(
         theta1=0.1,
         theta2=0.15,
@@ -42,7 +42,6 @@ def test_ebs_coverage_with_custom_beta_alpha():
         delta=0.1,
         reference_shots=5000,
         beta=1.5,
-        alpha=0.8,
     )
 
     assert stats.n_trials == 5
