@@ -180,18 +180,6 @@ def test_ebs_invalid_beta():
         )
 
 
-def test_ebs_invalid_alpha():
-    """Should raise ValueError for alpha <= 0."""
-    with pytest.raises(ValueError, match="alpha must be > 0"):
-        EmpiricalBernsteinStopper(
-            epsilon_stat=0.02,
-            delta=0.01,
-            a=-1.0,
-            b=1.0,
-            alpha=0.0,
-        )
-
-
 def test_ebs_invalid_n_min():
     """Should raise ValueError for n_min < 1."""
     with pytest.raises(ValueError, match="n_min must be >= 1"):
@@ -287,7 +275,7 @@ def test_delta_schedule_sums_to_delta():
 
 def test_compute_radius_matches_manual():
     """compute_radius should match manual calculation."""
-    from qamp_shotplanner.planners.empirical_bernstein import eb_radius_modified
+    from qamp_shotplanner.planners.empirical_bernstein import eb_radius_maurer
     from qamp_shotplanner.stats.running_stats import RunningStats
 
     stopper = EmpiricalBernsteinStopper(
@@ -299,14 +287,14 @@ def test_compute_radius_matches_manual():
 
     stats = RunningStats.from_samples([0.5] * 100)
 
-    # Manual calculation
+    # Manual calculation using the provable two-sided Maurer-Pontil radius,
+    # which is what compute_radius evaluates.
     deltas = stopper.delta_schedule()
-    expected = eb_radius_modified(
+    expected = eb_radius_maurer(
         n=stats.n,
         R=stopper.R,
         var_biased=stats.variance_biased,
-        delta_k=deltas[0],
-        alpha=stopper.alpha,
+        delta=deltas[0],
     )
 
     # API calculation

@@ -97,7 +97,6 @@ def run_swap_fidelity_estimator_ebs(
     noise_model: Optional[NoiseModel] = None,
     seed_simulator: Optional[int] = None,
     beta: float = 1.1,
-    alpha: float = 1.0,
 ) -> tuple[float, int]:
     """Run SWAP test with Empirical Bernstein stopping.
 
@@ -115,7 +114,6 @@ def run_swap_fidelity_estimator_ebs(
         noise_model: Optional Qiskit noise model for simulation
         seed_simulator: Optional random seed for reproducibility
         beta: Geometric checkpoint factor for EBS (default 1.1)
-        alpha: Mid-interval tightness parameter for EBS (default 1.0)
 
     Returns:
         (F_hat, shots_used) where F_hat is the estimated overlap²
@@ -131,7 +129,6 @@ def run_swap_fidelity_estimator_ebs(
         a=-1.0,  # Per-shot Z_anc ∈ [-1, 1]
         b=+1.0,
         beta=beta,
-        alpha=alpha,
     )
 
     # Track checkpoint index for seed progression
@@ -177,7 +174,6 @@ def run_swap_fidelity_estimator_ebs_batch_optimized(
     noise_model: Optional[NoiseModel] = None,
     seed_simulator: Optional[int] = None,
     beta: float = 1.1,
-    alpha: float = 1.0,
 ) -> tuple[float, int, RunningStats]:
     """Run SWAP test with EBS using optimized batch sampling.
 
@@ -191,7 +187,6 @@ def run_swap_fidelity_estimator_ebs_batch_optimized(
         noise_model: Optional Qiskit noise model for simulation
         seed_simulator: Optional random seed for reproducibility
         beta: Geometric checkpoint factor for EBS (default 1.1)
-        alpha: Mid-interval tightness parameter for EBS (default 1.0)
 
     Returns:
         (F_hat, shots_used, stats) where F_hat is the estimated overlap²,
@@ -210,7 +205,6 @@ def run_swap_fidelity_estimator_ebs_batch_optimized(
         a=-1.0,
         b=+1.0,
         beta=beta,
-        alpha=alpha,
     )
 
     checkpoints = stopper.checkpoints()

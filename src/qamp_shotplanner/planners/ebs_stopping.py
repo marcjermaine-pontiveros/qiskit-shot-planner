@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Callable, Literal, Sequence
 
 from qamp_shotplanner.planners.empirical_bernstein import (
+    eb_radius_maurer,
     eb_radius_modified,
     ebs_delta_schedule,
     geom_checkpoints,
@@ -34,16 +35,15 @@ class StopResult:
 class EmpiricalBernsteinStopper:
     """Empirical Bernstein stopping for bounded IID variables.
 
-    Uses Algorithm 2 from Gresch–Tepe–Kliesch (arXiv:2502.01730v1):
-    - Geometric checking to avoid wasteful evaluations
-    - Mid-interval stopping modification (via alpha parameter)
+    Stops on the provable two-sided Maurer-Pontil empirical Bernstein radius
+    (``eb_radius_maurer``), the single radius used throughout the thesis:
+    - Geometric checking at predetermined checkpoints to avoid wasteful evaluations
+    - Uniform per-check failure budget ``delta_k = delta / K``
     - Hoeffding cap (never exceeds Hoeffding's planned shots)
 
-    The stopping criterion at checkpoint k:
-        ε_n_k < ε_stat
-
-    where ε_n_k is computed using the modified empirical Bernstein bound
-    with per-check confidence allocation d_k.
+    The stopping criterion at checkpoint k is ``r_n_k <= epsilon_stat``, where
+    ``r_n_k`` is the Maurer-Pontil radius evaluated with the per-check budget
+    ``delta_k``.
     """
 
     def __init__(
@@ -53,7 +53,6 @@ class EmpiricalBernsteinStopper:
         a: float,
         b: float,
         beta: float = 1.1,
-        alpha: float = 1.0,
         n_min: int = 10,
     ):
         """Initialize the EBS stopper.
@@ -64,7 +63,6 @@ class EmpiricalBernsteinStopper:
             a: Lower bound of the random variable
             b: Upper bound of the random variable
             beta: Geometric checkpoint factor (> 1). Default 1.1.
-            alpha: Mid-interval tightness parameter (> 0). Default 1.0.
             n_min: Minimum samples before first check. Default 10.
 
         Raises:
@@ -78,8 +76,6 @@ class EmpiricalBernsteinStopper:
             raise ValueError("a must be < b")
         if beta <= 1:
             raise ValueError("beta must be > 1")
-        if alpha <= 0:
-            raise ValueError("alpha must be > 0")
         if n_min < 1:
             raise ValueError("n_min must be >= 1")
 
@@ -89,7 +85,6 @@ class EmpiricalBernsteinStopper:
         self.b = b
         self.R = b - a
         self.beta = beta
-        self.alpha = alpha
         self.n_min = n_min
 
         # Compute Hoeffding cap (maximum shots we might use)
@@ -131,7 +126,7 @@ class EmpiricalBernsteinStopper:
         """Compute the empirical Bernstein radius at a checkpoint.
 
         This encapsulates the stopping criterion calculation, using the
-        stopper's configured parameters (R, alpha) and the per-check delta.
+        stopper's configured range R and the per-check delta.
 
         Args:
             stats: RunningStats with current sample statistics
@@ -149,12 +144,11 @@ class EmpiricalBernsteinStopper:
             )
 
         delta_k = self._deltas[checkpoint_index]
-        return eb_radius_modified(
+        return eb_radius_maurer(
             n=stats.n,
             R=self.R,
             var_biased=stats.variance_biased,
-            delta_k=delta_k,
-            alpha=self.alpha,
+            delta=delta_k,
         )
 
     def should_stop(self, stats: "RunningStats", checkpoint_index: int) -> bool:
@@ -224,12 +218,11 @@ class EmpiricalBernsteinStopper:
             if stats.n >= self.n_min:
                 # Compute modified EB radius at this checkpoint
                 delta_k = self._deltas[k]
-                epsilon_n = eb_radius_modified(
+                epsilon_n = eb_radius_maurer(
                     n=stats.n,
                     R=self.R,
                     var_biased=stats.variance_biased,
-                    delta_k=delta_k,
-                    alpha=self.alpha,
+                    delta=delta_k,
                 )
 
                 # Stop if radius is below target
@@ -244,12 +237,11 @@ class EmpiricalBernsteinStopper:
 
         # If we never stopped early, we've hit the Hoeffding cap
         # Compute final radius for reporting
-        final_epsilon = eb_radius_modified(
+        final_epsilon = eb_radius_maurer(
             n=stats.n,
             R=self.R,
             var_biased=stats.variance_biased,
-            delta_k=self._deltas[-1],
-            alpha=self.alpha,
+            delta=self._deltas[-1],
         )
 
         return StopResult(

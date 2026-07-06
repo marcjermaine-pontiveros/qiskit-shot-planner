@@ -26,3 +26,14 @@ coverage.xml
 
 # mypy
 .mypy_cache/
+
+# Generated reproducibility artifacts
+examples/pcsc2026/results/
+
+# Generated regen artifacts
+results/
+
+# Secrets — never commit
+.env
+*.env
+examples/pcsc2026/.env

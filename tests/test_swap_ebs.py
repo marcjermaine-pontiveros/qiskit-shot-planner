@@ -213,8 +213,8 @@ def test_swap_ebs_invalid_circuit():
         )
 
 
-def test_swap_ebs_with_custom_beta_alpha():
-    """Custom beta and alpha parameters should be accepted."""
+def test_swap_ebs_with_custom_beta():
+    """A custom beta parameter should be accepted."""
     qc = swap_test_1qubit(theta1=0.1, theta2=0.1)
 
     F_hat, shots_used = run_swap_fidelity_estimator_ebs(
@@ -223,7 +223,6 @@ def test_swap_ebs_with_custom_beta_alpha():
         delta=0.01,
         seed_simulator=42,
         beta=1.5,
-        alpha=0.8,
     )
 
     assert 0.0 <= F_hat <= 1.0

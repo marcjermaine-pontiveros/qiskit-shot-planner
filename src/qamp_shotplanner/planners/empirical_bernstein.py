@@ -181,3 +181,28 @@ def ebs_delta_schedule(delta: float, K: int) -> list[float]:
 
     d_k = delta / K
     return [d_k] * K
+
+
+def eb_radius_maurer(n: int, R: float, var_biased: float, delta: float) -> float:
+    """Two-sided Maurer-Pontil (2009) empirical Bernstein radius.
+
+    The tightest well-established empirical Bernstein bound: with probability at
+    least ``1 - delta``,
+
+        |mean_n - mu| <= sqrt(2 V_n ln(4/delta) / n) + 7 R ln(4/delta) / (3(n-1)),
+
+    where ``V_n`` is the unbiased sample variance (``var_biased * n/(n-1)``). The
+    ``ln(4/delta)`` argument is the two-sided form (a union bound over the two
+    one-sided ``ln(2/delta)`` statements). This is the proved default radius the geometric- and
+    anytime-checkpoint rules stop on throughout the thesis; at the operating point
+    used here it is tighter than the Audibert ``3R`` form (smaller lower-order
+    coefficient outweighing the marginally larger log argument), and unlike the
+    ``R``-coefficient variant it is rigorously proved.
+    """
+    if n < 2:
+        return float("inf")
+    if R <= 0 or not (0 < delta < 1) or var_biased < 0:
+        raise ValueError("invalid arguments to eb_radius_maurer")
+    x = log(4.0 / delta)
+    v_unbiased = var_biased * n / (n - 1)
+    return sqrt(2.0 * v_unbiased * x / n) + 7.0 * R * x / (3.0 * (n - 1))
