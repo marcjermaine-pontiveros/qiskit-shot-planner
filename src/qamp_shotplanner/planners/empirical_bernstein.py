@@ -193,9 +193,11 @@ def eb_radius_maurer(n: int, R: float, var_biased: float, delta: float) -> float
 
     where ``V_n`` is the unbiased sample variance (``var_biased * n/(n-1)``). The
     ``ln(4/delta)`` argument is the two-sided form (a union bound over the two
-    one-sided ``ln(2/delta)`` statements). This is the radius the geometric- and
-    anytime-checkpoint rules stop on; it dominates the Audibert ``3R`` form on
-    both terms and, unlike the ``R``-coefficient variant, is rigorously proved.
+    one-sided ``ln(2/delta)`` statements). This is the proved default radius the geometric- and
+    anytime-checkpoint rules stop on throughout the thesis; at the operating point
+    used here it is tighter than the Audibert ``3R`` form (smaller lower-order
+    coefficient outweighing the marginally larger log argument), and unlike the
+    ``R``-coefficient variant it is rigorously proved.
     """
     if n < 2:
         return float("inf")

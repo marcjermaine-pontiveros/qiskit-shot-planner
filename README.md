@@ -2,25 +2,29 @@
 
 ## Overview
 
-This package provides tools for planning the number of shots needed to estimate quantum circuit expectation values with statistical guarantees. It implements Hoeffding's inequality for bounded random variables and includes a complete SWAP test fidelity estimation workflow.
+`qiskit-shot-planner` (package `qamp_shotplanner`) plans and adaptively stops the
+number of shots needed to estimate quantum expectation values with explicit
+finite-sample `(ε, δ)` guarantees. It is the reference implementation for the
+MS thesis *Adaptive Shot Allocation for Quantum Observable Estimation via
+Concentration Inequalities*, grown from the QAMP 2025 prototype.
 
-## MVP Features
+## Features (v0.2.0)
 
-### What's Already Implemented
+- **Hoeffding planner** — fixed-budget shot planning for bounded variables `X ∈ [a, b]`.
+- **Empirical Bernstein stopping** — variance-adaptive early stopping on the provable
+  two-sided **Maurer–Pontil** radius, via a geometric-checkpoint rule.
+- **Anytime-valid stopping** — a confidence-sequence variant valid at every sample count.
+- **Bonferroni multi-Pauli** — joint `(ε, δ)` energy guarantee across Hamiltonian terms,
+  with uniform / tight / variance-aware allocation.
+- **Le Cam lower bounds** — two-point sample-complexity floors for the optimality benchmark.
+- **Backends** — sampler adapters, single-knob depolarizing+readout noise models, and
+  IBM Runtime run provenance (job capture + manifest).
+- **Error mitigation** — ZNE gate folding with a variance-inflation (`γ²`) diagnostic.
+- **Workloads** — SWAP-test fidelity, QAOA MaxCut, and five-term H₂ VQE.
 
-- **Hoeffding Planner**: Generic shot planning for bounded variables X ∈ [a, b]
-- **SWAP Test Circuits**: 3-qubit SWAP test for single-qubit state fidelity estimation
-- **EstimatorV2 Integration**: Qiskit Aer EstimatorV2 execution wrapper with noise modeling
-- **Coverage Validation**: Empirical validation of Hoeffding bounds through repeated trials
-- **Observable Helpers**: Convenient constructors for single-qubit, multi-qubit, and Hamiltonian observables
-- **Demo Notebooks**: Four reproducible notebooks demonstrating different quantum estimation tasks
-
-### Achieved Results
-
-From the experimental validation:
-- **0/1000 bound violations** in coverage validation (exceeds theoretical δ=0.01)
-- **Three-level error decomposition**: Statistical error vs. hardware bias vs. total error
-- **Reproducible demo**: Consistent results across multiple runs with deterministic seeds
+The stopping rules control sampling error relative to the (possibly biased) device-level
+expectation; hardware bias is kept explicitly outside the guarantee via a three-level
+error hierarchy. To reproduce the thesis numbers, check out the `v0.2.0` tag.
 
 ## Installation
 
@@ -389,26 +393,24 @@ qamp-2025/
 
 ## Scope and Limitations
 
-### Week 1-2 Scope (MVP)
-✅ Hoeffding planner for bounded variables
-✅ SWAP test circuit construction
-✅ EstimatorV2 execution wrapper
-✅ Coverage validation harness
-✅ Observable helper functions (single/multi-qubit, Hamiltonian)
-✅ Four demo notebooks with reproducible results
-✅ Comprehensive tests (41 tests total)
+### In Scope (v0.2.0)
+✅ Hoeffding, Empirical Bernstein (Maurer–Pontil), geometric-checkpoint, and anytime stopping
+✅ Bonferroni multi-Pauli energy guarantee with variance-aware allocation
+✅ Le Cam two-point lower bounds
+✅ Noise models, IBM Runtime provenance, and ZNE with a variance-inflation diagnostic
+✅ SWAP-test, QAOA, and H₂ VQE workloads
+✅ Coverage validation harness and a full test suite
 
 ### Out of Scope (Future Work)
-❌ Variance-adaptive planning (Empirical Bernstein)
-❌ Anytime stopping
-❌ IBM Runtime hardware execution
-❌ Error mitigation hooks
-❌ Rich CLI or benchmarking frameworks
+❌ Live session-based hardware stopping (open plan runs the resumable job-mode driver instead)
+❌ PEC and other mitigation families beyond ZNE
+❌ Rich CLI or general benchmarking frameworks
 
-## Contributing
+## Reproducibility
 
-This is a QAMP 2025 project. See [Issue #53](https://github.com/qiskit-advocate/qamp-2025/issues/53) for project context.
+`scripts/` regenerates the thesis manuscript artifacts (tables, figures, hardware, online runs);
+`examples/pcsc2026/` holds the PCSC/QCE paper experiment drivers. Both run on this library.
 
 ## License
 
-MIT License - See LICENSE file for details.
+MIT License — see the [LICENSE](LICENSE) file.

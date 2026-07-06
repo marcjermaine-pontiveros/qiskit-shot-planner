@@ -172,14 +172,20 @@ def workloads(trials: int, seeds: list[int]) -> list[dict]:
         "QAOA", 1.0 - zz**2, zz,
         lambda s: statevector_sampler(qaoa_qc, zz_outcome_map, seed=s), trials, n_h, seeds))
 
-    # VQE: Bonferroni over the H2 Pauli terms at equilibrium; reduction vs the
-    # per-term Hoeffding total. Coverage omitted (needs the exact energy ref).
+    # VQE: Bonferroni over the H2 Pauli terms at equilibrium, using the
+    # variance-aware allocation of the manuscript; reduction vs the fixed
+    # uniform-split per-term Hoeffding total (the same baseline the manuscript
+    # reports for both splits).
     terms = h2_terms(H2_BOND)
     ansatz = vqe_ansatz(*_h2_angles())
-    n_h_vqe = _vqe_hoeffding_total(terms)  # like-for-like: same eps_j=eps/(2|c|_1) as Bonferroni
+    n_h_vqe = _vqe_hoeffding_total(terms)  # fixed baseline: uniform eps_j=eps/(2|c|_1)
     from qiskit.quantum_info import Statevector, SparsePauliOp
     sv = Statevector(ansatz)
-    e_ref = float(sum(c * sv.expectation_value(SparsePauliOp(lbl)).real for c, lbl in terms))
+    mus = [float(sv.expectation_value(SparsePauliOp(lbl)).real) for _, lbl in terms]
+    e_ref = float(sum(c * mu for (c, _), mu in zip(terms, mus)))
+    # Per-term standard deviations of the +/-1 observables drive the
+    # variance-aware split eps_j ~ (sigma_j^2/|c_j|)^{1/3} (App. B multi-LB).
+    sigmas = [(1.0 - mu * mu) ** 0.5 if mu * mu < 1.0 else 0.0 for mu in mus]
     vqe_seed_tau, vqe_seed_cov = [], []
     for master in seeds:
         mrng = np.random.default_rng(master)
@@ -190,7 +196,7 @@ def workloads(trials: int, seeds: list[int]) -> list[dict]:
                 (c, statevector_sampler(measured_ansatz(ansatz, lbl), pauli_outcome_map(lbl), seed=sd + i))
                 for i, (c, lbl) in enumerate(terms)
             ]
-            res = bonferroni_estimate(per_term, eps=EPS, delta=DELTA)
+            res = bonferroni_estimate(per_term, eps=EPS, delta=DELTA, sigmas=sigmas)
             tots.append(res.total_shots)
             covs.append(abs(res.energy - e_ref) <= EPS / 2.0)  # energy-accurate target eps/2
         vqe_seed_tau.append(float(np.mean(tots)))
