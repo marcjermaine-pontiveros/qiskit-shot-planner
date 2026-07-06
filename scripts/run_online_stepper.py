@@ -159,7 +159,7 @@ def main() -> None:
             "backend": args.backend, "eps": EPS, "delta": DELTA,
             "beta": args.beta, "n_min": args.n_min, "n_h": n_h,
             "checkpoints": stp.checkpoints(), "deltas": list(stp._deltas),
-            "R": stp.R, "alpha": stp.alpha, "epsilon_stat": stp.epsilon_stat,
+            "R": stp.R, "epsilon_stat": stp.epsilon_stat,
             "cur_idx": 0, "n_accum": 0, "sum_x": 0.0, "sumsq_x": 0.0,
             "pending_job_id": None, "pending_shots": 0,
             "job_ids": [], "status": "running", "result": None,
