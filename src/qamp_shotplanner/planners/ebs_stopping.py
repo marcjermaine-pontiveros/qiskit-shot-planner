@@ -44,9 +44,6 @@ class EmpiricalBernsteinStopper:
     The stopping criterion at checkpoint k is ``r_n_k <= epsilon_stat``, where
     ``r_n_k`` is the Maurer-Pontil radius evaluated with the per-check budget
     ``delta_k``.
-
-    Note: ``alpha`` is retained for backward compatibility with the earlier
-    modified-radius prototype but is ignored by the Maurer-Pontil radius.
     """
 
     def __init__(
@@ -56,7 +53,6 @@ class EmpiricalBernsteinStopper:
         a: float,
         b: float,
         beta: float = 1.1,
-        alpha: float = 1.0,
         n_min: int = 10,
     ):
         """Initialize the EBS stopper.
@@ -67,8 +63,6 @@ class EmpiricalBernsteinStopper:
             a: Lower bound of the random variable
             b: Upper bound of the random variable
             beta: Geometric checkpoint factor (> 1). Default 1.1.
-            alpha: Legacy mid-interval tightness parameter (> 0). Ignored by the
-                Maurer-Pontil radius; retained only for backward compatibility.
             n_min: Minimum samples before first check. Default 10.
 
         Raises:
@@ -82,8 +76,6 @@ class EmpiricalBernsteinStopper:
             raise ValueError("a must be < b")
         if beta <= 1:
             raise ValueError("beta must be > 1")
-        if alpha <= 0:
-            raise ValueError("alpha must be > 0")
         if n_min < 1:
             raise ValueError("n_min must be >= 1")
 
@@ -93,7 +85,6 @@ class EmpiricalBernsteinStopper:
         self.b = b
         self.R = b - a
         self.beta = beta
-        self.alpha = alpha
         self.n_min = n_min
 
         # Compute Hoeffding cap (maximum shots we might use)

@@ -180,18 +180,6 @@ def test_ebs_invalid_beta():
         )
 
 
-def test_ebs_invalid_alpha():
-    """Should raise ValueError for alpha <= 0."""
-    with pytest.raises(ValueError, match="alpha must be > 0"):
-        EmpiricalBernsteinStopper(
-            epsilon_stat=0.02,
-            delta=0.01,
-            a=-1.0,
-            b=1.0,
-            alpha=0.0,
-        )
-
-
 def test_ebs_invalid_n_min():
     """Should raise ValueError for n_min < 1."""
     with pytest.raises(ValueError, match="n_min must be >= 1"):
