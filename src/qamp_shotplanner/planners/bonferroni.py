@@ -35,7 +35,7 @@ class BonferroniResult:
     per_term: list[StopResult]
 
 
-def _variance_aware_eps(terms, eps, sigmas):
+def _variance_aware_eps(terms, eps, sigmas, sigma_floor=0.05):
     """Optimal per-term tolerances that minimize total shots.
 
     Minimizing the empirical-Bernstein leading cost ``sum_j sigma_j^2 / eps_j^2``
@@ -45,10 +45,20 @@ def _variance_aware_eps(terms, eps, sigmas):
     guarantee is preserved -- only the split changes, not the union bound. This
     concentrates shots on the high-variance / high-weight terms (e.g. the XX
     exchange term of H2) and skips near-deterministic ones.
+
+    ``sigma_floor`` guards a numerical edge case: the leading-cost objective ignores
+    the radius's lower-order (range) term, so it would hand a term with tiny but
+    nonzero ``sigma_j`` an ``eps_j`` small enough that the ``7R/(3n)`` term forces an
+    enormous stopping time. Flooring the effective sigma at ``sigma_floor`` for such
+    near-deterministic terms bounds their tightness; because the result is still
+    renormalized to ``sum_j |c_j| eps_j = eps``, the guarantee is unchanged. Terms
+    with ``sigma_j == 0`` stay exact (nominal eps, no budget consumed).
     """
     weights = [(abs(c) if c else 0.0) for c, _ in terms]
+    # floor only small-but-nonzero variances; keep exact (sigma==0) terms special
+    eff = [max(s, sigma_floor) if s > 0 else 0.0 for s in sigmas]
     raw = [((s * s / w) ** (1.0 / 3.0) if (w > 0 and s > 0) else 0.0)
-           for (s, w) in zip(sigmas, weights)]
+           for (s, w) in zip(eff, weights)]
     denom = sum(w * r for w, r in zip(weights, raw))
     # sigma=0 terms are exact (zero error), so they do not consume the eps budget;
     # give them a nominal eps (they stop at n_min) and normalize over the rest.
