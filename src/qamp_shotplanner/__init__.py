@@ -49,6 +49,12 @@ from qamp_shotplanner.observables import (
 # Adaptive extensions (anytime, Bonferroni multi-Pauli)
 from qamp_shotplanner.planners.anytime import AnytimeEBSStopper, anytime_delta
 from qamp_shotplanner.planners.bonferroni import BonferroniResult, bonferroni_estimate
+from qamp_shotplanner.planners.grouped import (
+    GroupedResult,
+    QWCGroup,
+    grouped_energy_estimate,
+    qubitwise_commuting_groups,
+)
 
 # Backends (sampler adapters, noise models, run provenance)
 from qamp_shotplanner.backends import (
@@ -125,6 +131,10 @@ __all__ = [
     "anytime_delta",
     "BonferroniResult",
     "bonferroni_estimate",
+    "GroupedResult",
+    "QWCGroup",
+    "grouped_energy_estimate",
+    "qubitwise_commuting_groups",
     # Backends
     "statevector_sampler",
     "statevector_value_sampler",
