@@ -26,6 +26,9 @@ SampleMany = Callable[[int], list[float]]
 OutcomeMap = Callable[[str], float]
 """Map a measured bitstring to the observable's ±1 eigenvalue."""
 
+ValueMap = Callable[[str], float]
+"""Map a measured bitstring to an arbitrary real (bounded) observable value."""
+
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -80,6 +83,48 @@ def statevector_sampler(
     def sample_many(n: int) -> list[float]:
         raw = rng.binomial(1, p_plus, size=int(n))
         return (2.0 * raw - 1.0).tolist()
+
+    return sample_many
+
+
+def statevector_value_sampler(
+    circuit: QuantumCircuit,
+    value_map: ValueMap,
+    *,
+    seed: int,
+) -> SampleMany:
+    """Exact-distribution sampler for a general multi-valued bounded observable.
+
+    Generalizes :func:`statevector_sampler` beyond the two-outcome ±1 case:
+    precomputes the observable value for every computational-basis state once,
+    then draws basis states from the exact statevector distribution and returns
+    their values. Use for commuting-group observables — e.g. the summed parity
+    of many Pauli terms measured in one basis — whose per-shot value takes more
+    than two levels.
+
+    The precompute is ``O(2**n_qubits)`` in time and memory, so this targets
+    small simulated systems (roughly ``n_qubits <= 20``).
+
+    Args:
+        circuit: Unmeasured circuit, already rotated into the measurement basis.
+        value_map: Bitstring → real observable value for that outcome.
+        seed: Seed for the numpy generator.
+
+    Returns:
+        A ``SampleMany`` drawing observable values from the exact distribution.
+    """
+    n_qubits = circuit.num_qubits
+    probs = Statevector.from_instruction(circuit).probabilities()
+    values = np.fromiter(
+        (value_map(format(i, f"0{n_qubits}b")) for i in range(len(probs))),
+        dtype=float,
+        count=len(probs),
+    )
+    rng = np.random.default_rng(seed)
+
+    def sample_many(n: int) -> list[float]:
+        idx = rng.choice(len(probs), size=int(n), p=probs)
+        return values[idx].tolist()
 
     return sample_many
 
