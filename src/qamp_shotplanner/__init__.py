@@ -36,6 +36,11 @@ from qamp_shotplanner.validation.ebs_coverage import (
 )
 
 # Observables
+from qamp_shotplanner.estimator import (
+    AdaptiveEstimator,
+    AdaptiveResult,
+    AdaptiveEstimatorResult,
+)
 from qamp_shotplanner.observables import (
     pauli_x,
     pauli_y,
@@ -96,6 +101,9 @@ from qamp_shotplanner.lower_bound import (
 )
 
 __all__ = [
+    "AdaptiveEstimator",
+    "AdaptiveResult",
+    "AdaptiveEstimatorResult",
     # Core planner
     "HoeffdingPlanner",
     # EBS core
