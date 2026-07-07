@@ -1,6 +1,6 @@
 """QAMP Shot Planner - Budgeting circuit runs using concentration bounds."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 # Core
 from qamp_shotplanner.planners.hoeffding import HoeffdingPlanner
@@ -49,6 +49,12 @@ from qamp_shotplanner.observables import (
 # Adaptive extensions (anytime, Bonferroni multi-Pauli)
 from qamp_shotplanner.planners.anytime import AnytimeEBSStopper, anytime_delta
 from qamp_shotplanner.planners.bonferroni import BonferroniResult, bonferroni_estimate
+from qamp_shotplanner.planners.grouped import (
+    GroupedResult,
+    QWCGroup,
+    grouped_energy_estimate,
+    qubitwise_commuting_groups,
+)
 
 # Backends (sampler adapters, noise models, run provenance)
 from qamp_shotplanner.backends import (
@@ -63,6 +69,7 @@ from qamp_shotplanner.backends import (
     run_and_record,
     snapshot_calibration,
     statevector_sampler,
+    statevector_value_sampler,
     write_manifest,
 )
 
@@ -124,8 +131,13 @@ __all__ = [
     "anytime_delta",
     "BonferroniResult",
     "bonferroni_estimate",
+    "GroupedResult",
+    "QWCGroup",
+    "grouped_energy_estimate",
+    "qubitwise_commuting_groups",
     # Backends
     "statevector_sampler",
+    "statevector_value_sampler",
     "noise_model_sampler",
     "backend_sampler",
     "offline_replay_sampler",

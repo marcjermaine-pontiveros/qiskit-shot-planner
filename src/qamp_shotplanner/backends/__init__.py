@@ -5,6 +5,7 @@ from qamp_shotplanner.backends.samplers import (
     noise_model_sampler,
     offline_replay_sampler,
     statevector_sampler,
+    statevector_value_sampler,
 )
 from qamp_shotplanner.backends.noise_models import (
     calibrated_noise_model,
@@ -21,6 +22,7 @@ from qamp_shotplanner.backends.ibm import (
 
 __all__ = [
     "statevector_sampler",
+    "statevector_value_sampler",
     "noise_model_sampler",
     "backend_sampler",
     "offline_replay_sampler",
