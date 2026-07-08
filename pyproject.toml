@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qamp-shotplanner"
-version = "0.3.1"
+version = "0.4.0"
 description = "Adaptive shot allocation for quantum observable estimation with finite-sample guarantees"
 readme = "README.md"
 license = {text = "MIT"}
@@ -18,7 +18,7 @@ dependencies = [
     "pandas>=2.0.0",
     "pylatexenc>=2.10",
     "pytest>=9.0.2",
-    "qiskit>=1.0.0",
+    "qiskit>=2.0.0",
     "qiskit-aer>=0.14.0",
     "seaborn>=0.12.0",
 ]
