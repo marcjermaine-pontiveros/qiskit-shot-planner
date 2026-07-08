@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qamp-shotplanner"
-version = "0.3.1"
+version = "0.4.0"
 description = "Adaptive shot allocation for quantum observable estimation with finite-sample guarantees"
 readme = "README.md"
 license = {text = "MIT"}

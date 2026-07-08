@@ -1,6 +1,6 @@
 """QAMP Shot Planner - Budgeting circuit runs using concentration bounds."""
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 # Core
 from qamp_shotplanner.planners.hoeffding import HoeffdingPlanner
@@ -33,6 +33,13 @@ from qamp_shotplanner.validation.coverage import coverage_validation_swap, Cover
 from qamp_shotplanner.validation.ebs_coverage import (
     coverage_validation_swap_ebs,
     EBSCoverageStats,
+)
+
+# Adaptive estimator (EstimatorV2-shaped drop-in)
+from qamp_shotplanner.estimator import (
+    AdaptiveEstimator,
+    AdaptiveResult,
+    AdaptiveEstimatorResult,
 )
 
 # Observables
@@ -96,6 +103,10 @@ from qamp_shotplanner.lower_bound import (
 )
 
 __all__ = [
+    # Adaptive estimator
+    "AdaptiveEstimator",
+    "AdaptiveResult",
+    "AdaptiveEstimatorResult",
     # Core planner
     "HoeffdingPlanner",
     # EBS core
