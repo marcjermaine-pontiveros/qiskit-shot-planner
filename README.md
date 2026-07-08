@@ -17,6 +17,9 @@ the budget on high-variance observables and terminating early on low-variance on
 - **`AdaptiveEstimator`** — an `EstimatorV2`-shaped drop-in that returns a *certified*
   expectation value (`|value − ⟨O⟩| ≤ ε` w.p. `≥ 1 − δ`) together with the adaptive
   shot count, in place of a fixed-precision point estimate.
+- **`AdaptiveSampler`** — a `SamplerV2`-shaped counterpart that certifies a target-outcome
+  probability `P(outcome ∈ S)` to the same `(ε, δ)` — sampling until the Bernoulli
+  indicator is pinned, not for a fixed shot count.
 - **Hoeffding planner** — fixed-budget shot planning for bounded variables `X ∈ [a, b]`.
 - **Empirical Bernstein stopping** — variance-adaptive early stopping on the provable
   two-sided **Maurer–Pontil** radius, via a geometric-checkpoint rule.
@@ -64,6 +67,18 @@ print(result.value, result.shots)   # certified: |value − ⟨O⟩| ≤ 0.02 w.
 
 To run on hardware, pass a `sampler_factory` that submits to a backend — the `run()` call
 is unchanged. See `examples/adaptive_estimator/` for the full side-by-side with `EstimatorV2`.
+
+The `SamplerV2` counterpart certifies a target-outcome probability instead of an observable:
+
+```python
+from qamp_shotplanner import AdaptiveSampler
+
+r = AdaptiveSampler(epsilon=0.02, delta=0.01).run([(qc, "11")])[0]
+print(r.probability, r.shots)   # P('11') certified to ±0.02 w.p. ≥ 0.99
+```
+
+See `examples/adaptive_sampler/` for the details and the honest scope (a certified
+*functional* of the distribution, not the full distribution).
 
 ## Using with Your Own Circuits
 
@@ -423,7 +438,7 @@ qamp-2025/
 ## Scope and Limitations
 
 ### In Scope
-- ✅ `AdaptiveEstimator` — certified drop-in for the V2 primitive stack
+- ✅ `AdaptiveEstimator` / `AdaptiveSampler` — certified drop-ins for the V2 primitive stack
 - ✅ Hoeffding, Empirical Bernstein (Maurer–Pontil), geometric-checkpoint, and anytime stopping
 - ✅ Bonferroni multi-Pauli energy guarantee with variance-aware allocation
 - ✅ Le Cam two-point lower bounds

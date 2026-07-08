@@ -35,11 +35,16 @@ from qamp_shotplanner.validation.ebs_coverage import (
     EBSCoverageStats,
 )
 
-# Adaptive estimator (EstimatorV2-shaped drop-in)
+# Adaptive V2-primitive drop-ins (certified estimator + sampler)
 from qamp_shotplanner.estimator import (
     AdaptiveEstimator,
     AdaptiveResult,
     AdaptiveEstimatorResult,
+)
+from qamp_shotplanner.sampler import (
+    AdaptiveSampler,
+    SamplerResult,
+    AdaptiveSamplerResult,
 )
 
 # Observables
@@ -103,10 +108,13 @@ from qamp_shotplanner.lower_bound import (
 )
 
 __all__ = [
-    # Adaptive estimator
+    # Adaptive V2-primitive drop-ins
     "AdaptiveEstimator",
     "AdaptiveResult",
     "AdaptiveEstimatorResult",
+    "AdaptiveSampler",
+    "SamplerResult",
+    "AdaptiveSamplerResult",
     # Core planner
     "HoeffdingPlanner",
     # EBS core
