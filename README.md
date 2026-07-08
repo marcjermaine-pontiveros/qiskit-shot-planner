@@ -1,15 +1,22 @@
-# Budgeting circuit runs for expectation values using concentration bounds
+# qiskit-shot-planner
+
+Adaptive shot allocation for quantum observable estimation with explicit
+finite-sample `(ε, δ)` guarantees — a drop-in for Qiskit's V2 primitive stack.
 
 ## Overview
 
 `qiskit-shot-planner` (package `qamp_shotplanner`) plans and adaptively stops the
-number of shots needed to estimate quantum expectation values with explicit
-finite-sample `(ε, δ)` guarantees. It is the reference implementation for the
-MS thesis *Adaptive Shot Allocation for Quantum Observable Estimation via
-Concentration Inequalities*, grown from the QAMP 2025 prototype.
+number of shots needed to estimate quantum expectation values so that the estimate
+satisfies `|value − ⟨O⟩| ≤ ε` with probability `≥ 1 − δ`. Instead of committing to a
+fixed shot count up front, it stops as soon as the empirical-Bernstein confidence
+radius meets the target tolerance, and reports the shots actually used — concentrating
+the budget on high-variance observables and terminating early on low-variance ones.
 
-## Features (v0.2.0)
+## Features
 
+- **`AdaptiveEstimator`** — an `EstimatorV2`-shaped drop-in that returns a *certified*
+  expectation value (`|value − ⟨O⟩| ≤ ε` w.p. `≥ 1 − δ`) together with the adaptive
+  shot count, in place of a fixed-precision point estimate.
 - **Hoeffding planner** — fixed-budget shot planning for bounded variables `X ∈ [a, b]`.
 - **Empirical Bernstein stopping** — variance-adaptive early stopping on the provable
   two-sided **Maurer–Pontil** radius, via a geometric-checkpoint rule.
@@ -24,7 +31,7 @@ Concentration Inequalities*, grown from the QAMP 2025 prototype.
 
 The stopping rules control sampling error relative to the (possibly biased) device-level
 expectation; hardware bias is kept explicitly outside the guarantee via a three-level
-error hierarchy. To reproduce the thesis numbers, check out the `v0.2.0` tag.
+error hierarchy.
 
 ## Installation
 
@@ -35,6 +42,28 @@ uv pip install -e .
 # Or with pip
 pip install -e .
 ```
+
+## Quickstart
+
+`AdaptiveEstimator` mirrors Qiskit's `EstimatorV2` call shape, but instead of a fixed
+precision with no coverage guarantee it returns a *certified* value plus the shots it took:
+
+```python
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
+from qamp_shotplanner import AdaptiveEstimator
+
+qc = QuantumCircuit(2)
+qc.ry(1.1, 0)
+qc.cx(0, 1)
+obs = SparsePauliOp.from_list([("ZZ", 1.0), ("XI", 0.5), ("II", -0.3)])
+
+result = AdaptiveEstimator(epsilon=0.02, delta=0.01).run([(qc, obs)])[0]
+print(result.value, result.shots)   # certified: |value − ⟨O⟩| ≤ 0.02 w.p. ≥ 0.99
+```
+
+To run on hardware, pass a `sampler_factory` that submits to a backend — the `run()` call
+is unchanged. See `examples/adaptive_estimator/` for the full side-by-side with `EstimatorV2`.
 
 ## Using with Your Own Circuits
 
@@ -393,23 +422,19 @@ qamp-2025/
 
 ## Scope and Limitations
 
-### In Scope (v0.2.0)
-✅ Hoeffding, Empirical Bernstein (Maurer–Pontil), geometric-checkpoint, and anytime stopping
-✅ Bonferroni multi-Pauli energy guarantee with variance-aware allocation
-✅ Le Cam two-point lower bounds
-✅ Noise models, IBM Runtime provenance, and ZNE with a variance-inflation diagnostic
-✅ SWAP-test, QAOA, and H₂ VQE workloads
-✅ Coverage validation harness and a full test suite
+### In Scope
+- ✅ `AdaptiveEstimator` — certified drop-in for the V2 primitive stack
+- ✅ Hoeffding, Empirical Bernstein (Maurer–Pontil), geometric-checkpoint, and anytime stopping
+- ✅ Bonferroni multi-Pauli energy guarantee with variance-aware allocation
+- ✅ Le Cam two-point lower bounds
+- ✅ Noise models, IBM Runtime provenance, and ZNE with a variance-inflation diagnostic
+- ✅ SWAP-test, QAOA, and H₂ VQE workloads
+- ✅ Coverage validation harness and a full test suite
 
 ### Out of Scope (Future Work)
-❌ Live session-based hardware stopping (open plan runs the resumable job-mode driver instead)
-❌ PEC and other mitigation families beyond ZNE
-❌ Rich CLI or general benchmarking frameworks
-
-## Reproducibility
-
-`scripts/` regenerates the thesis manuscript artifacts (tables, figures, hardware, online runs);
-`examples/pcsc2026/` holds the PCSC/QCE paper experiment drivers. Both run on this library.
+- ❌ Live session-based hardware stopping (open plan runs the resumable job-mode driver instead)
+- ❌ PEC and other mitigation families beyond ZNE
+- ❌ Rich CLI or general benchmarking frameworks
 
 ## License
 
